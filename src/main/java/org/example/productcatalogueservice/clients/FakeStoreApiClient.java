@@ -13,11 +13,46 @@ import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 @Component
 public class FakeStoreApiClient {
 
     @Autowired
     private RestTemplateBuilder restTemplateBuilder;
+
+    public FakeStoreProductDto getFakeStoreProduct(Long id) {
+        ResponseEntity<FakeStoreProductDto> response =
+                requestForEntity(
+                        HttpMethod.GET,
+                        "https://fakestoreapi.com/products/{id}",
+                        null,
+                        FakeStoreProductDto.class,
+                        id
+                );
+
+        if (validateResponse(response)) {
+            return response.getBody();
+        }
+        return null;
+    }
+
+    public FakeStoreProductDto createFakeStoreProduct(FakeStoreProductDto fakeStoreProductDtoInput) {
+        ResponseEntity<FakeStoreProductDto> response =
+                requestForEntity(
+                        HttpMethod.POST,
+                        "https://fakestoreapi.com/products",
+                        fakeStoreProductDtoInput,
+                        FakeStoreProductDto.class
+                );
+
+        if (validateResponse(response)) {
+            return response.getBody();
+        }
+        return null;
+    }
 
     public FakeStoreProductDto replaceFakeStoreProduct(FakeStoreProductDto fakeStoreProductDtoInput, Long id) {
         ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity =
@@ -32,6 +67,22 @@ public class FakeStoreApiClient {
 
         return null;
     }
+
+    public List<FakeStoreProductDto> getAllFakeStoreProducts() {
+        ResponseEntity<FakeStoreProductDto[]> response =
+                requestForEntity(
+                        HttpMethod.GET,
+                        "https://fakestoreapi.com/products",
+                        null,
+                        FakeStoreProductDto[].class
+                );
+
+        if (response.getStatusCode() == HttpStatus.valueOf(200) && response.getBody() != null) {
+            return Arrays.asList(response.getBody());
+        }
+        return Collections.emptyList();
+    }
+
 
     private Boolean validateResponse(ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity) {
         if(fakeStoreProductDtoResponseEntity.getBody() != null &&

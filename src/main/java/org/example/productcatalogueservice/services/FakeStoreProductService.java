@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class FakeStoreProductService implements IProductService {
@@ -23,40 +24,59 @@ public class FakeStoreProductService implements IProductService {
     @Autowired
     private FakeStoreApiClient fakeStoreApiClient;
 
+//    @Override
+//    public Product getProductById(Long id) {
+//        RestTemplate restTemplate = restTemplateBuilder.build();
+//        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity = restTemplate.getForEntity("https://fakestoreapi.com/products/{id}", FakeStoreProductDto.class, id);
+//
+//        FakeStoreProductDto fakeStoreProductDto = fakeStoreProductDtoResponseEntity.getBody();
+//
+//        if(fakeStoreProductDto != null && fakeStoreProductDtoResponseEntity.getStatusCode() == HttpStatus.resolve(200)) {
+//            return from(fakeStoreProductDto);
+//        }
+//
+//        return null;
+//    }
+
     @Override
     public Product getProductById(Long id) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity = restTemplate.getForEntity("https://fakestoreapi.com/products/{id}", FakeStoreProductDto.class, id);
-
-        FakeStoreProductDto fakeStoreProductDto = fakeStoreProductDtoResponseEntity.getBody();
-
-        if(fakeStoreProductDto != null && fakeStoreProductDtoResponseEntity.getStatusCode() == HttpStatus.resolve(200)) {
-            return from(fakeStoreProductDto);
+        FakeStoreProductDto output = fakeStoreApiClient.getFakeStoreProduct(id);
+        if (output == null) {
+            return null;
         }
-
-        return null;
+        return from(output);
     }
+
+//    @Override
+//    public Product createProduct(Product input) {
+//        FakeStoreProductDto fakeStoreProductDtoInput = from(input);
+//
+//        RestTemplate restTemplate = restTemplateBuilder.build();
+//
+//        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity =
+//                restTemplate.postForEntity("https://fakestoreapi.com/products",
+//                        fakeStoreProductDtoInput, FakeStoreProductDto.class);
+//
+//        FakeStoreProductDto fakeStoreProductDtoOutput =
+//                fakeStoreProductDtoResponseEntity.getBody();
+//
+//        if(fakeStoreProductDtoOutput != null &&
+//                fakeStoreProductDtoResponseEntity.getStatusCode() ==
+//                        HttpStatus.valueOf(200)) {
+//            return from(fakeStoreProductDtoOutput);
+//        }
+//
+//        return null;
+//    }
 
     @Override
     public Product createProduct(Product input) {
         FakeStoreProductDto fakeStoreProductDtoInput = from(input);
-
-        RestTemplate restTemplate = restTemplateBuilder.build();
-
-        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity =
-                restTemplate.postForEntity("https://fakestoreapi.com/products",
-                        fakeStoreProductDtoInput, FakeStoreProductDto.class);
-
-        FakeStoreProductDto fakeStoreProductDtoOutput =
-                fakeStoreProductDtoResponseEntity.getBody();
-
-        if(fakeStoreProductDtoOutput != null &&
-                fakeStoreProductDtoResponseEntity.getStatusCode() ==
-                        HttpStatus.valueOf(200)) {
-            return from(fakeStoreProductDtoOutput);
+        FakeStoreProductDto output = fakeStoreApiClient.createFakeStoreProduct(fakeStoreProductDtoInput);
+        if (output == null) {
+            return null;
         }
-
-        return null;
+        return from(output);
     }
 
 
@@ -69,7 +89,8 @@ public class FakeStoreProductService implements IProductService {
 
     @Override
     public List<Product> getAllProducts() {
-        return null;
+        List<FakeStoreProductDto> products = fakeStoreApiClient.getAllFakeStoreProducts();
+        return products.stream().map(this::from).collect(Collectors.toList());
     }
 
 

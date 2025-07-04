@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 //@RestController = @Controller + @ResponseBody
@@ -24,7 +25,11 @@ public class ProductController {
 
     @GetMapping("/products")
     public List<ProductDto> getAllProducts() {
-       return null;
+        List<Product> products = productService.getAllProducts();
+        // Replaced method reference with lambda expression
+        return products.stream()
+                .map(p -> from(p))
+                .collect(Collectors.toList());
     }
 
     //Read for @PathVariable , @RequestParam and @QueryParam
@@ -45,7 +50,7 @@ public class ProductController {
 //        }
     }
 
-    @PostMapping("products")
+    @PostMapping("/products")
     public ProductDto createProduct(@RequestBody ProductDto productDto) {
         Product product = from(productDto);
         Product output = productService.createProduct(product);
@@ -62,6 +67,7 @@ public class ProductController {
         if(output == null) return null;
         return  from(output);
     }
+
 
     private Product from(ProductDto productDto) {
         Product product = new Product();
@@ -96,8 +102,4 @@ public class ProductController {
         return productDto;
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, NullPointerException.class})
-    public ResponseEntity<String> handleExceptions(Exception exception) {
-        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
-    }
 }
