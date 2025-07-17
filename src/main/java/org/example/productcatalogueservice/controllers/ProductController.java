@@ -27,11 +27,14 @@ public class ProductController {
 
     @GetMapping("/products")
     public List<ProductDto> getAllProducts() {
+        List<ProductDto> productDtos = new ArrayList<>();
         List<Product> products = productService.getAllProducts();
-        // Replaced method reference with lambda expression
-        return products.stream()
-                .map(p -> from(p))
-                .collect(Collectors.toList());
+        for(Product product : products) {
+            ProductDto productDto = from(product);
+            productDtos.add(productDto);
+        }
+
+        return productDtos;
     }
 
     //Read for @PathVariable , @RequestParam and @QueryParam
@@ -39,8 +42,11 @@ public class ProductController {
     @GetMapping("/products/{id}")
     public ResponseEntity<ProductDto> getProductById(@PathVariable("id") Long productId) {
 //         try {
-        if (productId <= 0) {
+        if (productId < 0) {
             throw new IllegalArgumentException("Product Id not found");
+        }
+        else if(productId == 0) {
+            throw new IllegalArgumentException("Products exist with positive id");
         }
         Product product = productService.getProductById(productId);
         if (product == null) return null;
