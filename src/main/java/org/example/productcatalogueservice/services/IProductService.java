@@ -17,4 +17,6 @@ public interface IProductService {
     Product replaceProduct(Product input, Long id);
 
     List<Product> getAllProducts();
+
+    Product getProductDetailsBasedOnUserScope(Long userId,Long productId);
 }

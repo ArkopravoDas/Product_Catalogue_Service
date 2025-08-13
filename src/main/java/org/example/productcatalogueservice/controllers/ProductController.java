@@ -25,6 +25,11 @@ public class ProductController {
 //    @Qualifier("fakeStoreProductService")
     IProductService productService;
 
+    @GetMapping("/products/{userId}/{productId}")
+    public ProductDto getProductDetailsBasedOnUserScope(@PathVariable Long userId,@PathVariable Long productId) {
+        return from(productService.getProductDetailsBasedOnUserScope(userId, productId));
+    }
+
     @GetMapping("/products")
     public List<ProductDto> getAllProducts() {
         List<ProductDto> productDtos = new ArrayList<>();
