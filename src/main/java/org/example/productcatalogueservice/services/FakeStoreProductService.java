@@ -7,6 +7,8 @@ import org.example.productcatalogueservice.models.Category;
 import org.example.productcatalogueservice.models.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Primary
 public class FakeStoreProductService implements IProductService {
 
     @Autowired
@@ -24,60 +27,88 @@ public class FakeStoreProductService implements IProductService {
     @Autowired
     private FakeStoreApiClient fakeStoreApiClient;
 
-//    @Override
-//    public Product getProductById(Long id) {
-//        RestTemplate restTemplate = restTemplateBuilder.build();
-//        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity = restTemplate.getForEntity("https://fakestoreapi.com/products/{id}", FakeStoreProductDto.class, id);
-//
-//        FakeStoreProductDto fakeStoreProductDto = fakeStoreProductDtoResponseEntity.getBody();
-//
-//        if(fakeStoreProductDto != null && fakeStoreProductDtoResponseEntity.getStatusCode() == HttpStatus.resolve(200)) {
-//            return from(fakeStoreProductDto);
-//        }
-//
-//        return null;
-//    }
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
 
     @Override
     public Product getProductById(Long id) {
-        FakeStoreProductDto output = fakeStoreApiClient.getFakeStoreProduct(id);
-        if (output == null) {
-            return null;
+        RestTemplate restTemplate = restTemplateBuilder.build();
+
+        //if(found in redis)
+        //  return
+        //else
+        //call fakestore
+        //cache it
+        //return it
+
+        FakeStoreProductDto fakeStoreProductDto = null;
+
+        fakeStoreProductDto = (FakeStoreProductDto) redisTemplate.opsForHash().get("PRODUCTS", id);
+
+        if(fakeStoreProductDto == null) {
+            System.out.println("Not found in Redis");
+            fakeStoreProductDto =
+                    restTemplate.getForEntity("https://fakestoreapi.com/products/{id}",
+                            FakeStoreProductDto.class, id).getBody();
+
+            redisTemplate.opsForHash().put("PRODUCTS",id,fakeStoreProductDto);
+
+//      FakeStoreProductDto fakeStoreProductDto =
+//              fakeStoreProductDtoResponseEntity.getBody();
+
+//      if(fakeStoreProductDto != null &&
+//              fakeStoreProductDtoResponseEntity.getStatusCode() ==
+//                      HttpStatus.valueOf(200)) {
+            return from(fakeStoreProductDto);
+            //     }
+        } else {
+            System.out.println("Found in Redis");
+            return from(fakeStoreProductDto);
         }
-        return from(output);
+
+        //return null;
     }
 
 //    @Override
-//    public Product createProduct(Product input) {
-//        FakeStoreProductDto fakeStoreProductDtoInput = from(input);
-//
-//        RestTemplate restTemplate = restTemplateBuilder.build();
-//
-//        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity =
-//                restTemplate.postForEntity("https://fakestoreapi.com/products",
-//                        fakeStoreProductDtoInput, FakeStoreProductDto.class);
-//
-//        FakeStoreProductDto fakeStoreProductDtoOutput =
-//                fakeStoreProductDtoResponseEntity.getBody();
-//
-//        if(fakeStoreProductDtoOutput != null &&
-//                fakeStoreProductDtoResponseEntity.getStatusCode() ==
-//                        HttpStatus.valueOf(200)) {
-//            return from(fakeStoreProductDtoOutput);
+//    public Product getProductById(Long id) {
+//        FakeStoreProductDto output = fakeStoreApiClient.getFakeStoreProduct(id);
+//        if (output == null) {
+//            return null;
 //        }
-//
-//        return null;
+//        return from(output);
 //    }
 
     @Override
     public Product createProduct(Product input) {
         FakeStoreProductDto fakeStoreProductDtoInput = from(input);
-        FakeStoreProductDto output = fakeStoreApiClient.createFakeStoreProduct(fakeStoreProductDtoInput);
-        if (output == null) {
-            return null;
+
+        RestTemplate restTemplate = restTemplateBuilder.build();
+
+        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity =
+                restTemplate.postForEntity("https://fakestoreapi.com/products",
+                        fakeStoreProductDtoInput, FakeStoreProductDto.class);
+
+        FakeStoreProductDto fakeStoreProductDtoOutput =
+                fakeStoreProductDtoResponseEntity.getBody();
+
+        if(fakeStoreProductDtoOutput != null &&
+                fakeStoreProductDtoResponseEntity.getStatusCode() ==
+                        HttpStatus.valueOf(200)) {
+            return from(fakeStoreProductDtoOutput);
         }
-        return from(output);
+
+        return null;
     }
+
+//    @Override
+//    public Product createProduct(Product input) {
+//        FakeStoreProductDto fakeStoreProductDtoInput = from(input);
+//        FakeStoreProductDto output = fakeStoreApiClient.createFakeStoreProduct(fakeStoreProductDtoInput);
+//        if (output == null) {
+//            return null;
+//        }
+//        return from(output);
+//    }
 
 
     public Product replaceProduct(Product input, Long id) {
